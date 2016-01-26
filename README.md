@@ -12,7 +12,7 @@ If you're able to test whether it submit solutions correctly, please let me know
 This miner is up to 1.8x faster than [YTCI's Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
 It is at least 1.3x faster than YTCI's Krist Miner.
 
-On my Macbook Pro 15-inch Retina (Mid 2015) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 7 MH/s. The miner actually performs better or the same with 5 processes (not sure why), which also allows other applications to use more the CPU.
+On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 7 MH/s. The miner actually performs better or the same with 5 processes (not sure why), which also allows other applications to use more the CPU.
 
 On my Raspberry Pi 2 Model B, running with 4 processes gives me speeds of around 300-320 kH/s.
 
