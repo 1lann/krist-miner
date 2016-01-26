@@ -25,6 +25,9 @@ Binaries can be found under [releases](https://github.com/1lann/krist-miner/rele
 ## Usage
 Execute the binary in a terminal or command line for help.
 
+## Donations
+I don't even know why I'm bothering to put this section here, but if for some reason you would like to send me some virtual currency that has almost no value, feel free to send some KST to me for whatever reason: `k3be4p30lb`.
+
 ## GPU Miner?
 A GPU miner written for OpenCL is in the works, it may or may not ever be completed.
 
