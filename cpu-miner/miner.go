@@ -25,7 +25,7 @@ import (
 var maxWork int64
 var lastBlock string
 
-const version = "0.1"
+const version = "0.2"
 
 var address string
 var hashesThisPeriod int64
@@ -195,6 +195,8 @@ func submitResult(blockUsed string, nonce string) {
 	<-newLastBlock
 }
 
+var alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
 func mine(numProcs int) {
 	runtime.GOMAXPROCS(numProcs)
 
@@ -207,7 +209,8 @@ func mine(numProcs int) {
 
 	for proc := 0; proc < numProcs; proc++ {
 		go func(proc int) {
-			header := []byte(address + lastBlock + strconv.Itoa(proc))
+			procId := string(alphabet[proc])
+			header := []byte(address + lastBlock + procId)
 			threadBlock := lastBlock
 			headerLen := len(header)
 
@@ -221,8 +224,7 @@ func mine(numProcs int) {
 					nonce = permalgo.Next()
 					header = append(header[:headerLen], nonce...)
 					if sha2algo.Sum256NumberCmp(header, maxWork) {
-						submitResult(lastBlock,
-							strconv.Itoa(proc)+string(nonce))
+						submitResult(lastBlock, procId+string(nonce))
 					}
 				}
 
@@ -230,7 +232,7 @@ func mine(numProcs int) {
 
 				if threadBlock != lastBlock {
 					threadBlock = lastBlock
-					header = []byte(address + lastBlock + strconv.Itoa(proc))
+					header = []byte(address + lastBlock + procId)
 				}
 			}
 		}(proc)
