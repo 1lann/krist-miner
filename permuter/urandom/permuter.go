@@ -9,7 +9,7 @@ import (
 type generator struct{}
 
 func (g *generator) Next() []byte {
-	var result = make([]byte, 8)
+	var result = make([]byte, 5)
 	_, err := rand.Read(result)
 	if err != nil {
 		panic(err)

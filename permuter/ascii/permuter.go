@@ -4,19 +4,15 @@ import (
 	"github.com/1lann/krist-miner/permuter"
 )
 
-func incrementString(text []byte) []byte {
+func incrementString(text []byte) {
 	for place := len(text) - 1; place >= 0; place-- {
 		if text[place] < 'z' {
 			text[place] = text[place] + 1
-			return text
+			return
 		} else {
 			text[place] = 'a'
 		}
 	}
-
-	text = append([]byte{'a'}, text...)
-
-	return text
 }
 
 type generator struct {
@@ -24,16 +20,16 @@ type generator struct {
 }
 
 func (g *generator) Next() []byte {
-	g.lastString = incrementString(g.lastString)
+	incrementString(g.lastString)
 	return g.lastString
 }
 
 func (g *generator) Reset() {
-	g.lastString = []byte("aaaaaaaaaaaaaaaa")
+	g.lastString = []byte("aaaaaaaaaaa")
 }
 
 func init() {
 	permuter.RegisterAlgorithm("ascii", func() permuter.PermuterAlgorithm {
-		return &generator{[]byte("aaaaaaaaaaaaaaaa")}
+		return &generator{[]byte("aaaaaaaaaaa")}
 	})
 }
