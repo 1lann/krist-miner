@@ -85,10 +85,8 @@ Now let's compare it to what I have in my miner:
 
 ```go
 for {
-	for i := 0; i < 100000; i++ {
-		nonce = permalgo.Next()
-		...
-	}
+	nonce = permalgo.Next()
+	...
 }
 ```
 
