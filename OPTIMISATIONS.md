@@ -218,39 +218,39 @@ So my SHA256 function takes in the work value, that's different. Here's the code
 
 ```go
 func (g *generator) Sum256NumberCmp(data []byte, work int64) bool {
-	result := sha256.Sum256(data)
+    result := sha256.Sum256(data)
 
-	value := int64(result[31])
-	if value > work {
-		return false
-	}
+    value := int64(result[5])
+    if value > work {
+        return false
+    }
 
-	value += int64(result[30]) << (8 * 1)
-	if value > work {
-		return false
-	}
+    value += int64(result[4]) << (8 * 1)
+    if value > work {
+        return false
+    }
 
-	value += int64(result[29]) << (8 * 2)
-	if value > work {
-		return false
-	}
+    value += int64(result[3]) << (8 * 2)
+    if value > work {
+        return false
+    }
 
-	value += int64(result[28]) << (8 * 3)
-	if value > work {
-		return false
-	}
+    value += int64(result[2]) << (8 * 3)
+    if value > work {
+        return false
+    }
 
-	value += int64(result[27]) << (8 * 4)
-	if value > work {
-		return false
-	}
+    value += int64(result[1]) << (8 * 4)
+    if value > work {
+        return false
+    }
 
-	value += int64(result[26]) << (8 * 5)
-	if value > work {
-		return false
-	}
+    value += int64(result[0]) << (8 * 5)
+    if value > work {
+        return false
+    }
 
-	return true
+    return true
 }
 ```
 
