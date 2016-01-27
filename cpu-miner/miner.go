@@ -25,7 +25,7 @@ import (
 var maxWork int64
 var lastBlock string
 
-const version = "0.2"
+const version = "0.3"
 
 var address string
 var hashesThisPeriod int64
