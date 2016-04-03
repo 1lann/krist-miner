@@ -168,7 +168,7 @@ func submitResult(blockUsed string, nonce string) {
 
 	resp.Body.Close()
 
-	resp, err = http.Get("http://krist.ceriat.net/?getbalance=k3be4p30lb")
+	resp, err = http.Get("http://krist.ceriat.net/?getbalance=" + address)
 	if err != nil {
 		log.Println("failed to check balance:", err)
 		return
