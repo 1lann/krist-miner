@@ -7,8 +7,9 @@ import (
 	// _ "github.com/1lann/krist-miner/permuter/urandom"
 	"github.com/1lann/krist-miner/sha2"
 	// _ "github.com/1lann/krist-miner/sha2/asm"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
-	_ "github.com/1lann/krist-miner/sha2/go"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"runtime/pprof"
+	_ "github.com/1lann/krist-miner/sha2/go"
 )
 
 var maxWork int64
@@ -32,7 +33,7 @@ var hashesThisPeriod int64
 var newLastBlock = make(chan bool)
 
 func main() {
-	var numProcs int = runtime.NumCPU()
+	numProcs := runtime.NumCPU()
 
 	if len(os.Args) == 1 {
 		fmt.Println("krist-miner v" + version +
@@ -195,6 +196,16 @@ func submitResult(blockUsed string, nonce string) {
 	<-newLastBlock
 }
 
+func generateInstanceID() string {
+	bytes := make([]byte, 4)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		log.Fatal("cyrpto/rand not supported on this system: ", err)
+	}
+
+	return hex.EncodeToString(bytes)
+}
+
 var alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 func mine(numProcs int) {
@@ -209,8 +220,8 @@ func mine(numProcs int) {
 
 	for proc := 0; proc < numProcs; proc++ {
 		go func(proc int) {
-			procId := string(alphabet[proc])
-			header := []byte(address + lastBlock + procId)
+			instanceID := generateInstanceID()
+			header := []byte(address + lastBlock + instanceID)
 			threadBlock := lastBlock
 			headerLen := len(header)
 
@@ -224,7 +235,7 @@ func mine(numProcs int) {
 					nonce = permalgo.Next()
 					header = append(header[:headerLen], nonce...)
 					if sha2algo.Sum256NumberCmp(header, maxWork) {
-						submitResult(lastBlock, procId+string(nonce))
+						submitResult(lastBlock, instanceID+string(nonce))
 					}
 				}
 
@@ -232,7 +243,7 @@ func mine(numProcs int) {
 
 				if threadBlock != lastBlock {
 					threadBlock = lastBlock
-					header = []byte(address + lastBlock + procId)
+					header = []byte(address + lastBlock + instanceID)
 				}
 			}
 		}(proc)
@@ -258,11 +269,4 @@ func mine(numProcs int) {
 		debug.SetGCPercent(10)
 		debug.SetGCPercent(-1)
 	}
-
-	f, err := os.Create("mem.out")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.WriteHeapProfile(f)
-	f.Close()
 }
