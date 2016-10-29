@@ -228,14 +228,11 @@ func mine(numProcs int) {
 			sha2algo := sha2.NewAlgorithmInstance("go")
 			permalgo := permuter.NewAlgorithmInstance("ascii")
 
-			var nonce []byte
-
 			for {
-				for i := 0; i < 100000; i++ {
-					nonce = permalgo.Next()
-					header = append(header[:headerLen], nonce...)
+				for i := 0; i < 1000000; i++ {
+					header = append(header[:headerLen], permalgo.Next()...)
 					if sha2algo.Sum256NumberCmp(header, maxWork) {
-						submitResult(lastBlock, instanceID+string(nonce))
+						submitResult(lastBlock, instanceID+string(header[headerLen:]))
 					}
 				}
 
@@ -256,8 +253,8 @@ func mine(numProcs int) {
 		for i := 0; i < 10; i++ {
 			time.Sleep(time.Second * 5)
 
-			log.Printf("%.3f MH/s\n", float64(hashesThisPeriod)/
-				(time.Now().Sub(previousTime).Seconds()*10.0))
+			log.Printf("%.2f MH/s\n", float64(hashesThisPeriod)/
+				time.Now().Sub(previousTime).Seconds())
 
 			previousTime = time.Now()
 			hashesThisPeriod = 0
