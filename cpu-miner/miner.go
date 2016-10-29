@@ -1,12 +1,6 @@
 package main
 
 import (
-	"github.com/1lann/krist-miner/permuter"
-	_ "github.com/1lann/krist-miner/permuter/ascii"
-	// _ "github.com/1lann/krist-miner/permuter/number"
-	// _ "github.com/1lann/krist-miner/permuter/urandom"
-	"github.com/1lann/krist-miner/sha2"
-	// _ "github.com/1lann/krist-miner/sha2/asm"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -20,13 +14,13 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/1lann/krist-miner/sha2/go"
+	"github.com/1lann/sha256-simd"
 )
 
 var maxWork int64
 var lastBlock string
 
-const version = "0.4"
+const version = "1.0"
 
 var address string
 var hashesThisPeriod int64
@@ -225,15 +219,15 @@ func mine(numProcs int) {
 			threadBlock := lastBlock
 			headerLen := len(header)
 
-			sha2algo := sha2.NewAlgorithmInstance("go")
-			permalgo := permuter.NewAlgorithmInstance("ascii")
+			nonce := []byte("aaaaaaaaaaa")
 
 			for {
 				for i := 0; i < 1000000; i++ {
-					header = append(header[:headerLen], permalgo.Next()...)
-					if sha2algo.Sum256NumberCmp(header, maxWork) {
-						submitResult(lastBlock, instanceID+string(header[headerLen:]))
+					header = append(header[:headerLen], nonce...)
+					if sha256.SumCmp256(header, maxWork) {
+						submitResult(lastBlock, instanceID+string(nonce))
 					}
+					incrementString(nonce)
 				}
 
 				hashesThisPeriod++
@@ -265,5 +259,16 @@ func mine(numProcs int) {
 
 		debug.SetGCPercent(10)
 		debug.SetGCPercent(-1)
+	}
+}
+
+func incrementString(text []byte) {
+	for place := len(text) - 1; place >= 0; place-- {
+		if text[place] < 'z' {
+			text[place] = text[place] + 1
+			return
+		} else {
+			text[place] = 'a'
+		}
 	}
 }
