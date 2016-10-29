@@ -9,15 +9,12 @@ finds are correct, and whether or not it can submit solutions without issues.
 If you're able to test whether it submit solutions correctly, please let me know if it works or not.
 
 ## Performance
-This miner is up to 1.8x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
-It is at least 1.3x faster than YTCI Krist Miner.
+This miner is up to 2.5x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
+It is at least 1.8x faster than YTCI Krist Miner.
 
-On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 7 MH/s. The miner actually performs better or the same with 5 processes (not sure why), which also allows other applications to use more the CPU.
+On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 14 MH/s.
 
-On my Raspberry Pi 2 Model B, running with 4 processes gives me speeds of around 300-320 kH/s.
-
-This miner has a very light memory footprint of < 2.5 MB. Whereas YTCI miner requires a Java VM which has a
-much larger overhead.
+This miner has a very light memory footprint of < 3 MB. Whereas YTCI miner requires a Java VM which has a much larger overhead.
 
 ## Binaries
 Binaries can be found under [releases](https://github.com/1lann/krist-miner/releases).

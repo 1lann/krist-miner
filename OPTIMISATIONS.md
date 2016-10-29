@@ -1,3 +1,7 @@
+# OPTIMISATIONS LIST OUT OF DATE
+
+This is the optimisations present in krist-miner v0.4 and below. krist-miner v1.0 has even better optimisations, and I'm too lazy to update this document right now.
+
 # Optimisations in krist-miner
 
 This document will detail the optimisations which allows my miner to be faster than Yevano's Krist Miner.
@@ -232,7 +236,7 @@ As a result of the memory reuse and careful design of my miner, I'm actually cap
 
 It's through all these optimisations, whether big or small, which allows my miner to run 1.3-1.8x faster than Yevano's. It's amazing how such small details that you often look over, such as the use of `Float.toString` can actually have a significant impact on performance. Because when it comes to something as intensive as mining a cyrptocurrency, that you need to run as fast as you possibly can, every instruction saved counts.
 
-Remember, the slowest part of the mining process is actually calculating the SHA256 hash, and I'm not even touching that, yet my miner can run 1.3-1.8x faster. So purely through reducing overhead, my miner is able to boost performance quite significantly. 
+Remember, the slowest part of the mining process is actually calculating the SHA256 hash, and I'm not even touching that, yet my miner can run 1.3-1.8x faster. So purely through reducing overhead, my miner is able to boost performance quite significantly.
 
 I had a great time writing my miner, and thinking about all the optimisations I could make. In fact, I was trying many differnet methods as you can tell by looking at the code, the SHA256 algorithm and "permuter" are actually modular, and I tried many different algorithms to find the fastest combination. I was quite surprised to find that the fastest SHA256 algorithm was actually the one in the Go standard library!
 
