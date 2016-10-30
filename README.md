@@ -1,5 +1,5 @@
 # krist-miner
-A fast CPU krist miner written in Go, designed to be modular, extendable and fast.
+The fastest open source CPU Krist miner, written in Go.
 
 ## Notice
 This miner is very new, and unfortunately submitting solutions is untested due to the current state of Krist that
