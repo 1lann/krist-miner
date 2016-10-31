@@ -1,18 +1,11 @@
 # krist-miner
 The fastest open source CPU Krist miner, written in Go.
 
-## Notice
-This miner is very new, and unfortunately submitting solutions is untested due to the current state of Krist that
-it's very difficult to mine any blocks. I'm not sure if the solutions this miner
-finds are correct, and whether or not it can submit solutions without issues.
-
-If you're able to test whether it submit solutions correctly, please let me know if it works or not.
-
 ## Performance
-This miner is up to 2.5x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
-It is at least 1.8x faster than YTCI Krist Miner.
+This miner is up to 3.2x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
+It is at least 2.5x faster than YTCI Krist Miner.
 
-On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 14 MH/s.
+On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 17 MH/s.
 
 This miner has a very light memory footprint of < 3 MB. Whereas YTCI miner requires a Java VM which has a much larger overhead.
 
@@ -23,7 +16,10 @@ Binaries can be found under [releases](https://github.com/1lann/krist-miner/rele
 Execute the binary in a terminal or command line for help.
 
 ## Donations
-I don't even know why I'm bothering to put this section here, but if for some reason you would like to send me some virtual currency that has almost no value, feel free to send some KST to me for whatever reason: `k3be4p30lb`.
+I don't even know why I'm bothering to put this section here, but if for some reason you would like to send me some virtual currency that has almost no value, feel free to send some KST to me for whatever reason.
+```
+k3be4p30lb
+```
 
 ## GPU Miner?
 A GPU miner written for OpenCL is in the works, it may or may not ever be completed.
