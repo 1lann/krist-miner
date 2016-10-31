@@ -17,7 +17,7 @@ import (
 	"github.com/1lann/sha256-simd"
 )
 
-var maxWork int64
+var maxWork uint32
 var lastBlock string
 
 const version = "1.0"
@@ -106,15 +106,16 @@ func updateWork() {
 			return
 		}
 
-		previousWork := maxWork
-		maxWork, err = strconv.ParseInt(string(data), 10, 64)
+		previousWork := int64(maxWork)
+		newWork, err := strconv.ParseInt(string(data), 10, 64)
 		if err != nil {
 			log.Println("failed to convert work to int:", data)
 			return
 		}
 
-		if maxWork != previousWork {
-			log.Println("work updated to:", maxWork)
+		if newWork != previousWork {
+			maxWork = uint32(newWork)
+			log.Println("work updated to:", newWork)
 		}
 	} else {
 		log.Println("failed to update work:", resp.Status)
@@ -215,26 +216,46 @@ func mine(numProcs int) {
 	for proc := 0; proc < numProcs; proc++ {
 		go func(proc int) {
 			instanceID := generateInstanceID()
-			header := []byte(address + lastBlock + instanceID)
-			threadBlock := lastBlock
-			headerLen := len(header)
 
-			nonce := []byte("aaaaaaaaaaa")
+			var full [64]byte
+			fullSlice := full[:]
+
+			copy(full[:30], []byte(address+lastBlock+instanceID))
+
+			if len(address+lastBlock+instanceID) != 30 {
+				panic("miner: incorrect header size. report this to 1lann.")
+			}
+
+			threadBlock := lastBlock
+
+			// first byte of nonce is [30]
+			copy(full[30:], []byte("aaaaaaaaaaa"))
+
+			if full[41] != 0 || full[40] == 0 {
+				panic("overwrite! report this to 1lann.")
+			}
+
+			full[41] = 128
+			full[62] = 1
+			full[63] = 72
 
 			for {
 				for i := 0; i < 1000000; i++ {
-					header = append(header[:headerLen], nonce...)
-					if sha256.SumCmp256(header, maxWork) {
-						submitResult(lastBlock, instanceID+string(nonce))
+					if sha256.SumCmp256(fullSlice, maxWork) {
+						submitResult(lastBlock, string(fullSlice[22:41]))
 					}
-					incrementString(nonce)
+					incrementString(full)
 				}
 
 				hashesThisPeriod++
 
 				if threadBlock != lastBlock {
 					threadBlock = lastBlock
-					header = []byte(address + lastBlock + instanceID)
+					copy(full[:30], []byte(address+lastBlock+instanceID))
+
+					if len(address+lastBlock+instanceID) != 30 {
+						panic("miner: incorrect header size. report this to 1lann.")
+					}
 				}
 			}
 		}(proc)
@@ -262,8 +283,8 @@ func mine(numProcs int) {
 	}
 }
 
-func incrementString(text []byte) {
-	for place := len(text) - 1; place >= 0; place-- {
+func incrementString(text [64]byte) {
+	for place := 40; place >= 30; place-- {
 		if text[place] < 'z' {
 			text[place] = text[place] + 1
 			return
