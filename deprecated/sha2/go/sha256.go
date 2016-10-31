@@ -3,7 +3,7 @@ package shago
 import (
 	"crypto/sha256"
 
-	"github.com/1lann/krist-miner/sha2"
+	"github.com/1lann/krist-miner/deprecated/sha2"
 )
 
 type generator struct{}

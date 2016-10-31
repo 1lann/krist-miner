@@ -18,7 +18,7 @@ func (g *generator) Sum256Number(data []byte) int64 {
 	}
 	copy(start[:], data)
 
-	return sha256.SumToNum256(start)
+	return sha256.SumToNum256(start[:])
 }
 
 func (g *generator) Sum256NumberCmp(data []byte, work int64) bool {
@@ -32,7 +32,7 @@ func (g *generator) Sum256NumberCmp(data []byte, work int64) bool {
 	}
 	copy(start[:], data)
 
-	return sha256.SumCmp256(start, uint32(work))
+	return sha256.SumCmp256(start[:], uint32(work))
 }
 
 func init() {

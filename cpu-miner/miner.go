@@ -59,7 +59,7 @@ func main() {
 }
 
 func updateLastBlock() {
-	resp, err := http.Get("http://krist.ceriat.net/?lastblock")
+	resp, err := http.Get("http://kristtest.lemmmy.pw/?lastblock")
 	if err != nil {
 		log.Println("failed to update last block:", err)
 		return
@@ -91,7 +91,7 @@ func updateLastBlock() {
 }
 
 func updateWork() {
-	resp, err := http.Get("http://krist.ceriat.net/?getwork")
+	resp, err := http.Get("http://kristtest.lemmmy.pw/?getwork")
 	if err != nil {
 		log.Println("failed to update work:", err)
 		return
@@ -149,7 +149,7 @@ func submitResult(blockUsed string, nonce string) {
 
 	recentlySubmittedBlocks[0] = blockUsed
 
-	resp, err := http.Get("http://krist.ceriat.net/?submitblock&address=" +
+	resp, err := http.Get("http://kristtest.lemmmy.pw/?submitblock&address=" +
 		address + "&nonce=" + nonce)
 	if err != nil {
 		log.Println("failed to submit block:", err)
@@ -164,7 +164,7 @@ func submitResult(blockUsed string, nonce string) {
 
 	resp.Body.Close()
 
-	resp, err = http.Get("http://krist.ceriat.net/?getbalance=" + address)
+	resp, err = http.Get("http://kristtest.lemmmy.pw/?getbalance=" + address)
 	if err != nil {
 		log.Println("failed to check balance:", err)
 		return
@@ -217,8 +217,7 @@ func mine(numProcs int) {
 		go func(proc int) {
 			instanceID := generateInstanceID()
 
-			var full [64]byte
-			fullSlice := full[:]
+			var full = make([]byte, 64)
 
 			copy(full[:30], []byte(address+lastBlock+instanceID))
 
@@ -241,8 +240,8 @@ func mine(numProcs int) {
 
 			for {
 				for i := 0; i < 1000000; i++ {
-					if sha256.SumCmp256(fullSlice, maxWork) {
-						submitResult(lastBlock, string(fullSlice[22:41]))
+					if sha256.SumCmp256(full, maxWork) {
+						submitResult(lastBlock, string(full[22:41]))
 					}
 					incrementString(full)
 				}
@@ -283,7 +282,7 @@ func mine(numProcs int) {
 	}
 }
 
-func incrementString(text [64]byte) {
+func incrementString(text []byte) {
 	for place := 40; place >= 30; place-- {
 		if text[place] < 'z' {
 			text[place] = text[place] + 1
