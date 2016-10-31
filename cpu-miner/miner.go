@@ -20,7 +20,7 @@ import (
 var maxWork uint32
 var lastBlock string
 
-const version = "1.0"
+const version = "1.1"
 
 var address string
 var hashesThisPeriod int64
@@ -59,7 +59,7 @@ func main() {
 }
 
 func updateLastBlock() {
-	resp, err := http.Get("http://kristtest.lemmmy.pw/?lastblock")
+	resp, err := http.Get("https://krist.ceriat.net/?lastblock")
 	if err != nil {
 		log.Println("failed to update last block:", err)
 		return
@@ -91,7 +91,7 @@ func updateLastBlock() {
 }
 
 func updateWork() {
-	resp, err := http.Get("http://kristtest.lemmmy.pw/?getwork")
+	resp, err := http.Get("https://krist.ceriat.net/?getwork")
 	if err != nil {
 		log.Println("failed to update work:", err)
 		return
@@ -149,7 +149,7 @@ func submitResult(blockUsed string, nonce string) {
 
 	recentlySubmittedBlocks[0] = blockUsed
 
-	resp, err := http.Get("http://kristtest.lemmmy.pw/?submitblock&address=" +
+	resp, err := http.Get("https://krist.ceriat.net/?submitblock&address=" +
 		address + "&nonce=" + nonce)
 	if err != nil {
 		log.Println("failed to submit block:", err)
@@ -164,7 +164,7 @@ func submitResult(blockUsed string, nonce string) {
 
 	resp.Body.Close()
 
-	resp, err = http.Get("http://kristtest.lemmmy.pw/?getbalance=" + address)
+	resp, err = http.Get("https://krist.ceriat.net/?getbalance=" + address)
 	if err != nil {
 		log.Println("failed to check balance:", err)
 		return
