@@ -2,11 +2,11 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -14,17 +14,29 @@ import (
 	"sync"
 	"time"
 
-	"github.com/1lann/sha256-simd"
+	"github.com/1lann/krist-miner/cpu-miner/cpuid"
 )
 
 var maxWork uint32
 var lastBlock string
 
-const version = "1.1"
+const version = "2.0"
+const fullHeaderSize = 33
 
 var address string
 var hashesThisPeriod int64
 var newLastBlock = make(chan bool)
+
+const (
+	init0 = 0x6A09E667
+	init1 = 0xBB67AE85
+	init2 = 0x3C6EF372
+	init3 = 0xA54FF53A
+	init4 = 0x510E527F
+	init5 = 0x9B05688C
+	init6 = 0x1F83D9AB
+	init7 = 0x5BE0CD19
+)
 
 func main() {
 	numProcs := runtime.NumCPU()
@@ -36,6 +48,28 @@ func main() {
 		fmt.Println("By default, the number of processes used will be the\n" +
 			"number of CPU cores available on this system (" +
 			strconv.Itoa(numProcs) + ").")
+
+		optimisations := ""
+		if cpuid.AVX2 {
+			optimisations += " AVX2"
+		}
+		if cpuid.AVX {
+			optimisations += " AVX"
+		}
+		if cpuid.SSSE3 {
+			optimisations += " SSSE3"
+		}
+		if cpuid.ArmSha {
+			optimisations += " ARMSHA"
+		}
+
+		if optimisations == "" {
+			fmt.Println("No optimisations are supported on your CPU! This version will not work on your CPU.")
+			fmt.Println("Either use v1.1 or get a new CPU.")
+		} else {
+			fmt.Println("Optimisations supported:" + optimisations)
+		}
+
 		return
 	}
 
@@ -149,8 +183,12 @@ func submitResult(blockUsed string, nonce string) {
 
 	recentlySubmittedBlocks[0] = blockUsed
 
-	resp, err := http.Get("https://krist.ceriat.net/?submitblock&address=" +
-		address + "&nonce=" + nonce)
+	values := url.Values{}
+
+	values.Set("address", address)
+	values.Set("nonce", nonce)
+
+	resp, err := http.Get("https://krist.ceriat.net/?submitblock&" + values.Encode())
 	if err != nil {
 		log.Println("failed to submit block:", err)
 		return
@@ -191,20 +229,18 @@ func submitResult(blockUsed string, nonce string) {
 	<-newLastBlock
 }
 
-func generateInstanceID() string {
-	bytes := make([]byte, 4)
+func generateInstanceID() []byte {
+	bytes := make([]byte, 11)
 	_, err := rand.Read(bytes)
 	if err != nil {
 		log.Fatal("cyrpto/rand not supported on this system: ", err)
 	}
 
-	return hex.EncodeToString(bytes)
+	return bytes
 }
 
-var alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-
 func mine(numProcs int) {
-	runtime.GOMAXPROCS(numProcs)
+	runtime.GOMAXPROCS(numProcs + 1)
 
 	updateWork()
 	updateLastBlock()
@@ -213,51 +249,33 @@ func mine(numProcs int) {
 
 	log.Println("using", numProcs, "processes")
 
+	switch {
+	case cpuid.AVX2:
+		log.Println("using AVX2 optimisations")
+	case cpuid.AVX:
+		log.Println("using AVX optimisations")
+	case cpuid.SSSE3:
+		log.Println("using SSSE3 optimisations")
+	case cpuid.ArmSha:
+		log.Println("using ARMSHA optimisations")
+	default:
+		log.Println("your CPU isn't supported for optimised mining")
+		log.Println("please use v1.1 or get a new CPU.")
+		os.Exit(1)
+	}
+
 	for proc := 0; proc < numProcs; proc++ {
-		go func(proc int) {
-			instanceID := generateInstanceID()
-
-			var full = make([]byte, 64)
-
-			copy(full[:30], []byte(address+lastBlock+instanceID))
-
-			if len(address+lastBlock+instanceID) != 30 {
-				panic("miner: incorrect header size. report this to 1lann.")
-			}
-
-			threadBlock := lastBlock
-
-			// first byte of nonce is [30]
-			copy(full[30:], []byte("aaaaaaaaaaa"))
-
-			if full[41] != 0 || full[40] == 0 {
-				panic("overwrite! report this to 1lann.")
-			}
-
-			full[41] = 128
-			full[62] = 1
-			full[63] = 72
-
-			for {
-				for i := 0; i < 1000000; i++ {
-					if sha256.SumCmp256(full, maxWork) {
-						submitResult(lastBlock, string(full[22:41]))
-					}
-					incrementString(full)
-				}
-
-				hashesThisPeriod++
-
-				if threadBlock != lastBlock {
-					threadBlock = lastBlock
-					copy(full[:30], []byte(address+lastBlock+instanceID))
-
-					if len(address+lastBlock+instanceID) != 30 {
-						panic("miner: incorrect header size. report this to 1lann.")
-					}
-				}
-			}
-		}(proc)
+		// decide on miner and execute
+		switch {
+		case cpuid.AVX2:
+			go mineAVX2()
+		case cpuid.AVX:
+			go mineAVX()
+		case cpuid.SSSE3:
+			go mineSSSE3()
+		case cpuid.ArmSha:
+			go mineARM()
+		}
 	}
 
 	log.Println("mining for address " + address + "...")

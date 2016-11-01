@@ -25,7 +25,7 @@ k3be4p30lb
 A GPU miner written for OpenCL is in the works, it may or may not ever be completed.
 
 ## License
-This krist-miner is licensed under the MIT license:
+This krist-miner is licensed under the MIT license. This not apply to the code taken from [Minio's SHA-256 SIMD implementation](https://github.com/minio/sha256-simd).
 
 ```
 The MIT License (MIT)
@@ -50,3 +50,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+Files from Minio's SHA-256 implementation are noted at the top, and are licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Here is the list of modifications made:
+* Removed unnecessary code for Krist mining.
+* All `.s` files are left untouched.
+* All files in the cpu-miner/cpuid folder are left untouched.
