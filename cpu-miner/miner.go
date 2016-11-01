@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,7 +22,7 @@ var maxWork uint32
 var lastBlock string
 
 const version = "2.0"
-const fullHeaderSize = 33
+const fullHeaderSize = 30
 
 var address string
 var hashesThisPeriod int64
@@ -229,18 +230,18 @@ func submitResult(blockUsed string, nonce string) {
 	<-newLastBlock
 }
 
-func generateInstanceID() []byte {
-	bytes := make([]byte, 11)
+func generateInstanceID() string {
+	bytes := make([]byte, 4)
 	_, err := rand.Read(bytes)
 	if err != nil {
-		log.Fatal("cyrpto/rand not supported on this system: ", err)
+		log.Fatal("crypto/rand not supported on this system: ", err)
 	}
 
-	return bytes
+	return hex.EncodeToString(bytes)
 }
 
 func mine(numProcs int) {
-	runtime.GOMAXPROCS(numProcs + 1)
+	runtime.GOMAXPROCS(numProcs)
 
 	updateWork()
 	updateLastBlock()
@@ -300,13 +301,13 @@ func mine(numProcs int) {
 	}
 }
 
-func incrementString(text []byte) {
-	for place := 40; place >= 30; place-- {
-		if text[place] < 'z' {
-			text[place] = text[place] + 1
+func incrementNonce(na []byte) {
+	for place := 10; place >= 0; place-- {
+		if na[place] < 'z' {
+			na[place] = na[place] + 1
 			return
 		} else {
-			text[place] = 'a'
+			na[place] = 'A'
 		}
 	}
 }

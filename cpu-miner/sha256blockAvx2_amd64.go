@@ -2,11 +2,6 @@
 
 package main
 
-import (
-	"runtime"
-	"unsafe"
-)
-
 //go:noescape
 func blockAvx2(h []uint32, message []uint8)
 
@@ -17,16 +12,18 @@ func mineAVX2() {
 
 	var full = make([]byte, 64)
 
-	copy(full[:fullHeaderSize], append([]byte(address+lastBlock), instanceID...))
+	copy(full[:fullHeaderSize], []byte(address+lastBlock+instanceID))
 
-	if len(address+lastBlock)+len(instanceID) != fullHeaderSize {
+	if len(address+lastBlock+instanceID) != fullHeaderSize {
 		panic("miner: incorrect header size. report this to 1lann.")
 	}
 
 	threadBlock := lastBlock
-	noncePtr := (*uint64)(unsafe.Pointer(&full[fullHeaderSize]))
+	na := full[fullHeaderSize : fullHeaderSize+11]
+	na[0], na[1], na[2], na[3], na[4], na[5], na[6], na[7], na[8], na[9], na[10] =
+		'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'
 
-	if full[41] != 0 {
+	if full[41] != 0 || full[40] == 0 {
 		panic("overwrite! report this to 1lann.")
 	}
 
@@ -38,7 +35,7 @@ func mineAVX2() {
 
 	for {
 		for i := 0; i < 1000000; i++ {
-			(*noncePtr)++
+			incrementNonce(na)
 
 			h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7] =
 				init0, init1, init2, init3, init4, init5, init6, init7
@@ -59,13 +56,11 @@ func mineAVX2() {
 
 		if threadBlock != lastBlock {
 			threadBlock = lastBlock
-			copy(full[:fullHeaderSize], append([]byte(address+lastBlock), instanceID...))
+			copy(full[:fullHeaderSize], []byte(address+lastBlock+instanceID))
 
-			if len(address+lastBlock)+len(instanceID) != fullHeaderSize {
+			if len(address+lastBlock+instanceID) != fullHeaderSize {
 				panic("miner: incorrect header size. report this to 1lann.")
 			}
 		}
-
-		runtime.Gosched()
 	}
 }
