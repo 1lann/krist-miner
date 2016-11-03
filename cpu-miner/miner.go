@@ -27,6 +27,7 @@ const fullHeaderSize = 30
 var address string
 var hashesThisPeriod int64
 var newLastBlock = make(chan bool)
+var client = new(http.Client)
 
 const (
 	init0 = 0x6A09E667
@@ -93,8 +94,15 @@ func main() {
 	mine(numProcs)
 }
 
+func makeGet(url string) (*http.Response, error) {
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("User-Agent", "github.com/1lann/krist-miner v"+version)
+	return client.Do(req)
+}
+
 func updateLastBlock() {
-	resp, err := http.Get("https://krist.ceriat.net/?lastblock")
+	resp, err := makeGet("https://krist.ceriat.net/?lastblock")
+
 	if err != nil {
 		log.Println("failed to update last block:", err)
 		return
@@ -126,7 +134,7 @@ func updateLastBlock() {
 }
 
 func updateWork() {
-	resp, err := http.Get("https://krist.ceriat.net/?getwork")
+	resp, err := makeGet("https://krist.ceriat.net/?getwork")
 	if err != nil {
 		log.Println("failed to update work:", err)
 		return
@@ -189,7 +197,7 @@ func submitResult(blockUsed string, nonce string) {
 	values.Set("address", address)
 	values.Set("nonce", nonce)
 
-	resp, err := http.Get("https://krist.ceriat.net/?submitblock&" + values.Encode())
+	resp, err := makeGet("https://krist.ceriat.net/?submitblock&" + values.Encode())
 	if err != nil {
 		log.Println("failed to submit block:", err)
 		return
@@ -203,7 +211,7 @@ func submitResult(blockUsed string, nonce string) {
 
 	resp.Body.Close()
 
-	resp, err = http.Get("https://krist.ceriat.net/?getbalance=" + address)
+	resp, err = makeGet("https://krist.ceriat.net/?getbalance=" + address)
 	if err != nil {
 		log.Println("failed to check balance:", err)
 		return
