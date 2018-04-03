@@ -1,16 +1,13 @@
-// +build !noasm
-
 package main
 
 import (
 	"runtime"
 	"time"
+
+	sha256 "github.com/1lann/sha256-simd"
 )
 
-//go:noescape
-func blockAvx(h []uint32, message []uint8, reserved0, reserved1, reserved2, reserved3 uint64)
-
-func mineAVX(proc int) {
+func mineSlow(proc int) {
 	instanceID := generateInstanceID()
 
 	var full = make([]byte, 64)
@@ -34,26 +31,13 @@ func mineAVX(proc int) {
 	full[62] = 1
 	full[63] = 72
 
-	h := []uint32{0, 0, 0, 0, 0, 0, 0, 0}
-
 	for {
 		start := time.Now()
 		for i := 0; i < 5000000; i++ {
 			incrementNonce(na)
-
-			h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7] =
-				init0, init1, init2, init3, init4, init5, init6, init7
-			blockAvx(h, full, 0, 0, 0, 0)
-
-			if h[0] > 1 {
-				continue
+			if sha256.SumCmp256(full, maxWork) {
+				submitResult(lastBlock, string(full[22:41]))
 			}
-
-			if (h[0]<<16)|(h[1]>>16) > maxWork {
-				continue
-			}
-
-			submitResult(lastBlock, string(full[22:41]))
 		}
 
 		workerSpeeds[proc] = time.Since(start)

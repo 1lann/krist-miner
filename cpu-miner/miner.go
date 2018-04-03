@@ -4,15 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/1lann/krist-miner/cpu-miner/cpuid"
@@ -21,11 +19,16 @@ import (
 var maxWork uint32
 var lastBlock string
 
-const version = "2.0"
-const fullHeaderSize = 30
+const (
+	version        = "2.0beta"
+	fullHeaderSize = 30
+	endpoint       = "https://krist.ceriat.net"
+)
 
 var address string
-var hashesThisPeriod int64
+var privateKey string
+var namedAddr string
+var workerSpeeds []time.Duration
 var newLastBlock = make(chan bool)
 var client = new(http.Client)
 
@@ -40,16 +43,21 @@ const (
 	init7 = 0x5BE0CD19
 )
 
+var tradAddrRegex = regexp.MustCompile(`^([a-f0-9]{10}|k[a-z0-9]{9})$`)
+var namedAddrRegex = regexp.MustCompile(`^((?:[a-z0-9-_]{1,32}@)?([a-z0-9]{1,64})\.kst)$`)
+
 func main() {
 	numProcs := runtime.NumCPU()
 
+	fmt.Println("krist-miner v" + version +
+		" by 1lann (github.com/1lann/krist-miner)")
+
 	if len(os.Args) == 1 {
-		fmt.Println("krist-miner v" + version +
-			" by 1lann (github.com/1lann/krist-miner)")
 		fmt.Println("Usage: " + os.Args[0] + " address [num processes]")
 		fmt.Println("By default, the number of processes used will be the\n" +
 			"number of CPU cores available on this system (" +
 			strconv.Itoa(numProcs) + ").")
+		fmt.Println("An address can be a v1, v2 or named address (like me@name.kst)")
 
 		optimisations := ""
 		if cpuid.AVX2 {
@@ -66,8 +74,7 @@ func main() {
 		}
 
 		if optimisations == "" {
-			fmt.Println("No optimisations are supported on your CPU! This version will not work on your CPU.")
-			fmt.Println("Either use v1.1 or get a new CPU.")
+			fmt.Println("No optimisations are supported on your CPU")
 		} else {
 			fmt.Println("Optimisations supported:" + optimisations)
 		}
@@ -75,9 +82,15 @@ func main() {
 		return
 	}
 
-	address = os.Args[1]
-	if len(address) != 10 {
-		fmt.Println("Invalid address specified.")
+	if tradAddrRegex.Match([]byte(os.Args[1])) {
+		address = os.Args[1]
+	} else if namedAddrRegex.Match([]byte(os.Args[1])) {
+		namedAddr = os.Args[1]
+		if !setupNamedAddress() {
+			return
+		}
+	} else {
+		fmt.Println("Invalid address, check that you entered your address correctly")
 		return
 	}
 
@@ -94,148 +107,87 @@ func main() {
 	mine(numProcs)
 }
 
-func makeGet(url string) (*http.Response, error) {
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "github.com/1lann/krist-miner v"+version)
-	return client.Do(req)
-}
+func mine(numProcs int) {
+	runtime.GOMAXPROCS(numProcs)
+	workerSpeeds = make([]time.Duration, numProcs)
 
-func updateLastBlock() {
-	resp, err := makeGet("https://krist.ceriat.net/?lastblock")
+	updateWork()
+	updateLastBlock()
 
-	if err != nil {
-		log.Println("failed to update last block:", err)
-		return
-	}
+	debug.SetGCPercent(-1)
 
-	defer resp.Body.Close()
+	log.Println("using", numProcs, "processes")
 
-	if resp.StatusCode == 200 {
-		data, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("fail to read last block response:", err)
-			return
-		}
+	cpuid.AVX2 = false
+	cpuid.AVX = false
+	cpuid.SSSE3 = false
 
-		previousBlock := lastBlock
-		lastBlock = string(data)
-
-		if previousBlock != lastBlock {
-			log.Println("last block updated to:", lastBlock)
-
-			select {
-			case newLastBlock <- true:
-			default:
-			}
-		}
+	if os.Getenv("MINER_COMPAT") == "1" {
+		cpuid.AVX2 = false
+		cpuid.AVX = false
+		cpuid.SSSE3 = false
+		cpuid.ArmSha = false
+		log.Println("using compatibility mode optimisations")
 	} else {
-		log.Println("failed to update last block:", resp.Status)
-	}
-}
-
-func updateWork() {
-	resp, err := makeGet("https://krist.ceriat.net/?getwork")
-	if err != nil {
-		log.Println("failed to update work:", err)
-		return
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 200 {
-		data, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("failed to read work response:", err)
-			return
+		switch {
+		case cpuid.AVX2:
+			log.Println("using AVX2 optimisations")
+		case cpuid.AVX:
+			log.Println("using AVX optimisations")
+		case cpuid.SSSE3:
+			log.Println("using SSSE3 optimisations")
+		case cpuid.ArmSha:
+			log.Println("using ARMSHA optimisations")
+		default:
+			log.Println("using no optimisations")
 		}
-
-		previousWork := int64(maxWork)
-		newWork, err := strconv.ParseInt(string(data), 10, 64)
-		if err != nil {
-			log.Println("failed to convert work to int:", data)
-			return
-		}
-
-		if newWork != previousWork {
-			maxWork = uint32(newWork)
-			log.Println("work updated to:", newWork)
-		}
-	} else {
-		log.Println("failed to update work:", resp.Status)
-		return
 	}
-}
 
-var recentlySubmittedBlocks [5]string
-var submissionLock = &sync.Mutex{}
+	for proc := 0; proc < numProcs; proc++ {
+		// decide on miner and execute
+		switch {
+		case cpuid.AVX2:
+			go mineAVX2(proc)
+		case cpuid.AVX:
+			go mineAVX(proc)
+		case cpuid.SSSE3:
+			go mineSSSE3(proc)
+		case cpuid.ArmSha:
+			go mineARM(proc)
+		default:
+			go mineSlow(proc)
+		}
+	}
 
-func submitResult(blockUsed string, nonce string) {
-	submissionLock.Lock()
-	defer submissionLock.Unlock()
+	log.Println("mining for address " + address + "...")
 
-	for i := 0; i < 5; i++ {
-		if recentlySubmittedBlocks[i] == blockUsed {
-			if lastBlock != blockUsed {
-				return
+	for {
+		for i := 0; i < 10; i++ {
+			time.Sleep(time.Second * 5)
+
+			hashes := 0.0
+			for _, speed := range workerSpeeds {
+				hashes += 5 / speed.Seconds()
 			}
 
-			<-newLastBlock
-			return
-		}
-	}
+			log.Printf("%.2f MH/s\n", hashes)
 
-	for i := 1; i < 5; i++ {
-		recentlySubmittedBlocks[i] = recentlySubmittedBlocks[i-1]
-	}
-
-	log.Println("submitting solved block", blockUsed, "with nonce:", nonce)
-
-	recentlySubmittedBlocks[0] = blockUsed
-
-	values := url.Values{}
-
-	values.Set("address", address)
-	values.Set("nonce", nonce)
-
-	resp, err := makeGet("https://krist.ceriat.net/?submitblock&" + values.Encode())
-	if err != nil {
-		log.Println("failed to submit block:", err)
-		return
-	}
-
-	if resp.StatusCode != 200 {
-		log.Println("failed to submit block:", resp.Status)
-	} else {
-		log.Println("successfully submitted")
-	}
-
-	resp.Body.Close()
-
-	resp, err = makeGet("https://krist.ceriat.net/?getbalance=" + address)
-	if err != nil {
-		log.Println("failed to check balance:", err)
-		return
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		log.Println("failed to check balance:", resp.Status)
-	} else {
-		balance, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("failed to read balance response:", err)
-			return
+			updateWork()
+			updateLastBlock()
 		}
 
-		log.Println("balance:", string(balance))
+		debug.FreeOSMemory()
 	}
+}
 
-	if blockUsed != lastBlock {
-		return
+func incrementNonce(na []byte) {
+	for place := 10; place >= 0; place-- {
+		if na[place] < 'z' {
+			na[place] = na[place] + 1
+			return
+		}
+		na[place] = 'A'
 	}
-
-	<-newLastBlock
 }
 
 func generateInstanceID() string {
@@ -246,76 +198,4 @@ func generateInstanceID() string {
 	}
 
 	return hex.EncodeToString(bytes)
-}
-
-func mine(numProcs int) {
-	runtime.GOMAXPROCS(numProcs)
-
-	updateWork()
-	updateLastBlock()
-
-	debug.SetGCPercent(-1)
-
-	log.Println("using", numProcs, "processes")
-
-	switch {
-	case cpuid.AVX2:
-		log.Println("using AVX2 optimisations")
-	case cpuid.AVX:
-		log.Println("using AVX optimisations")
-	case cpuid.SSSE3:
-		log.Println("using SSSE3 optimisations")
-	case cpuid.ArmSha:
-		log.Println("using ARMSHA optimisations")
-	default:
-		log.Println("your CPU isn't supported for optimised mining")
-		log.Println("please use v1.1 or get a new CPU.")
-		os.Exit(1)
-	}
-
-	for proc := 0; proc < numProcs; proc++ {
-		// decide on miner and execute
-		switch {
-		case cpuid.AVX2:
-			go mineAVX2()
-		case cpuid.AVX:
-			go mineAVX()
-		case cpuid.SSSE3:
-			go mineSSSE3()
-		case cpuid.ArmSha:
-			go mineARM()
-		}
-	}
-
-	log.Println("mining for address " + address + "...")
-
-	previousTime := time.Now()
-	for {
-		for i := 0; i < 10; i++ {
-			time.Sleep(time.Second * 5)
-
-			log.Printf("%.2f MH/s\n", float64(hashesThisPeriod)/
-				time.Now().Sub(previousTime).Seconds())
-
-			previousTime = time.Now()
-			hashesThisPeriod = 0
-
-			updateWork()
-			updateLastBlock()
-		}
-
-		debug.SetGCPercent(10)
-		debug.SetGCPercent(-1)
-	}
-}
-
-func incrementNonce(na []byte) {
-	for place := 10; place >= 0; place-- {
-		if na[place] < 'z' {
-			na[place] = na[place] + 1
-			return
-		} else {
-			na[place] = 'A'
-		}
-	}
 }

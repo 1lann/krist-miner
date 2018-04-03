@@ -2,10 +2,10 @@
 The fastest open source CPU Krist miner, written in Go.
 
 ## Performance
-This miner is up to 3.2x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
+This miner is up to 3.5x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
 It is at least 2.5x faster than YTCI Krist Miner.
 
-On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 17 MH/s.
+On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 18 MH/s.
 
 This miner has a very light memory footprint of < 3 MB. Whereas YTCI miner requires a Java VM which has a much larger overhead.
 
@@ -25,7 +25,10 @@ k3be4p30lb
 A GPU miner written for OpenCL is in the works, it may or may not ever be completed.
 
 ## License
-This krist-miner is licensed under the MIT license. This not apply to the code taken from [Minio's SHA-256 SIMD implementation](https://github.com/minio/sha256-simd).
+This krist-miner is licensed under the MIT license. This not apply to the code taken from [Minio's SHA-256 SIMD implementation](https://github.com/minio/sha256-simd), which is licensed under the Apache 2 license,
+and such files subject to the Apache 2 license are noted in their headers.
+
+No modifications were made to files from Minio's SHA-256 SIMD implementation.
 
 ```
 The MIT License (MIT)
