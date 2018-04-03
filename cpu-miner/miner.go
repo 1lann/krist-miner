@@ -118,10 +118,6 @@ func mine(numProcs int) {
 
 	log.Println("using", numProcs, "processes")
 
-	cpuid.AVX2 = false
-	cpuid.AVX = false
-	cpuid.SSSE3 = false
-
 	if os.Getenv("MINER_COMPAT") == "1" {
 		cpuid.AVX2 = false
 		cpuid.AVX = false
