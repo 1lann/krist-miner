@@ -1,5 +1,5 @@
 # krist-miner
-The fastest open source CPU Krist miner, written in Go.
+The second fastest open source CPU Krist miner, written in Go.
 
 ## Performance
 This miner is up to 3.5x faster than [YTCI Krist Miner](https://github.com/Yevano/ytci-krist-miner/).
