@@ -16,40 +16,104 @@
 package cpuid
 
 // True when SIMD instructions are available.
-var AVX2 = haveAVX2()
-var AVX = haveAVX()
-var SSSE3 = haveSSSE3()
+var AVX512 bool
+var AVX2 bool
+var AVX bool
+var SSE bool
+var SSE2 bool
+var SSE3 bool
+var SSSE3 bool
+var SSE41 bool
+var SSE42 bool
+var POPCNT bool
+var SHA bool
 var ArmSha = haveArmSha()
 
-// haveAVX returns true when there is AVX support
-func haveAVX() bool {
-	_, _, c, _ := cpuid(1)
+func init() {
+	var _xsave bool
+	var _osxsave bool
+	var _avx bool
+	var _avx2 bool
+	var _avx512f bool
+	var _avx512dq bool
+	//	var _avx512pf        bool
+	//	var _avx512er        bool
+	//	var _avx512cd        bool
+	var _avx512bw bool
+	var _avx512vl bool
+	var _sseState bool
+	var _avxState bool
+	var _opmaskState bool
+	var _zmmHI256State bool
+	var _hi16ZmmState bool
 
-	// Check XGETBV, OXSAVE and AVX bits
-	if c&(1<<26) != 0 && c&(1<<27) != 0 && c&(1<<28) != 0 {
-		// Check for OS support
-		eax, _ := xgetbv(0)
-		return (eax & 0x6) == 0x6
-	}
-	return false
-}
-
-// haveAVX2 returns true when there is AVX2 support
-func haveAVX2() bool {
 	mfi, _, _, _ := cpuid(0)
 
-	// Check AVX2, AVX2 requires OS support, but BMI1/2 don't.
-	if mfi >= 7 && haveAVX() {
-		_, ebx, _, _ := cpuidex(7, 0)
-		return (ebx & 0x00000020) != 0
+	if mfi >= 1 {
+		_, _, c, d := cpuid(1)
+
+		SSE = (d & (1 << 25)) != 0
+		SSE2 = (d & (1 << 26)) != 0
+		SSE3 = (c & (1 << 0)) != 0
+		SSSE3 = (c & (1 << 9)) != 0
+		SSE41 = (c & (1 << 19)) != 0
+		SSE42 = (c & (1 << 20)) != 0
+		POPCNT = (c & (1 << 23)) != 0
+		_xsave = (c & (1 << 26)) != 0
+		_osxsave = (c & (1 << 27)) != 0
+		_avx = (c & (1 << 28)) != 0
 	}
-	return false
-}
 
-// haveSSSE3 returns true when there is SSSE3 support
-func haveSSSE3() bool {
+	if mfi >= 7 {
+		_, b, _, _ := cpuid(7)
 
-	_, _, c, _ := cpuid(1)
+		_avx2 = (b & (1 << 5)) != 0
+		_avx512f = (b & (1 << 16)) != 0
+		_avx512dq = (b & (1 << 17)) != 0
+		//		_avx512pf = (b & (1 << 26)) != 0
+		//		_avx512er = (b & (1 << 27)) != 0
+		//		_avx512cd = (b & (1 << 28)) != 0
+		_avx512bw = (b & (1 << 30)) != 0
+		_avx512vl = (b & (1 << 31)) != 0
+		SHA = (b & (1 << 29)) != 0
+	}
 
-	return (c & 0x00000200) != 0
+	// Stop here if XSAVE unsupported or not enabled
+	if !_xsave || !_osxsave {
+		return
+	}
+
+	if _xsave && _osxsave {
+		a, _ := xgetbv(0)
+
+		_sseState = (a & (1 << 1)) != 0
+		_avxState = (a & (1 << 2)) != 0
+		_opmaskState = (a & (1 << 5)) != 0
+		_zmmHI256State = (a & (1 << 6)) != 0
+		_hi16ZmmState = (a & (1 << 7)) != 0
+	} else {
+		_sseState = true
+	}
+
+	// Very unlikely that OS would enable XSAVE and then disable SSE
+	if !_sseState {
+		SSE = false
+		SSE2 = false
+		SSE3 = false
+		SSSE3 = false
+		SSE41 = false
+		SSE42 = false
+	}
+
+	if _avxState {
+		AVX = _avx
+		AVX2 = _avx2
+	}
+
+	if _opmaskState && _zmmHI256State && _hi16ZmmState {
+		AVX512 = (_avx512f &&
+			_avx512dq &&
+			_avx512bw &&
+			_avx512vl)
+	}
 }

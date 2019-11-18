@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 
+// +build !386,!amd64,!arm,!arm64 arm64,!linux
+
 package cpuid
 
 func cpuid(op uint32) (eax, ebx, ecx, edx uint32) {

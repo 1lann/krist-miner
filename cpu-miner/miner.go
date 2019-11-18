@@ -20,7 +20,7 @@ var maxWork uint32
 var lastBlock string
 
 const (
-	version        = "2.0beta"
+	version        = "2.1"
 	fullHeaderSize = 30
 	endpoint       = "https://krist.ceriat.net"
 )
@@ -60,6 +60,9 @@ func main() {
 		fmt.Println("An address can be a v1, v2 or named address (like me@name.kst)")
 
 		optimisations := ""
+		if cpuid.SHA && cpuid.SSSE3 && cpuid.SSE41 {
+			optimisations += " SHA"
+		}
 		if cpuid.AVX2 {
 			optimisations += " AVX2"
 		}
@@ -123,9 +126,12 @@ func mine(numProcs int) {
 		cpuid.AVX = false
 		cpuid.SSSE3 = false
 		cpuid.ArmSha = false
+		cpuid.SHA = false
 		log.Println("using compatibility mode optimisations")
 	} else {
 		switch {
+		case cpuid.SHA && cpuid.SSSE3 && cpuid.SSE41:
+			log.Println("using SHA optimisations")
 		case cpuid.AVX2:
 			log.Println("using AVX2 optimisations")
 		case cpuid.AVX:
@@ -142,6 +148,8 @@ func mine(numProcs int) {
 	for proc := 0; proc < numProcs; proc++ {
 		// decide on miner and execute
 		switch {
+		case cpuid.SHA && cpuid.SSSE3 && cpuid.SSE41:
+			go mineSHA(proc)
 		case cpuid.AVX2:
 			go mineAVX2(proc)
 		case cpuid.AVX:

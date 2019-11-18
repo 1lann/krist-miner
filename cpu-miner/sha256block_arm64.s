@@ -1,4 +1,4 @@
-//+build !noasm !appengine
+//+build !noasm,!appengine
 
 // ARM64 version of SHA256
 
@@ -19,7 +19,7 @@
 //
 
 //
-// Based on implementaion as found in  https://github.com/jocover/sha256-armv8
+// Based on implementation as found in https://github.com/jocover/sha256-armv8
 //
 // Use github.com/minio/asm2plan9s on this file to assemble ARM instructions to
 // their Plan9 equivalents
@@ -28,7 +28,7 @@
 TEXT ·blockArm(SB), 7, $0
 	MOVD h+0(FP), R0
 	MOVD message+24(FP), R1
-	MOVD lenmessage+32(FP), R2 // length of message
+	MOVD message_len+32(FP), R2 // length of message
 	SUBS $64, R2
 	BMI  complete
 
@@ -153,7 +153,6 @@ loop:
 
 complete:
 	RET
-
 
 // Constants table
 DATA ·constants+0x0(SB)/8, $0x71374491428a2f98

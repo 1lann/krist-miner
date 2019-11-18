@@ -7,6 +7,8 @@ It is at least 2.5x faster than YTCI Krist Miner.
 
 On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, running with 8 processes gives me speeds around 18 MH/s.
 
+On my Ryzen 5 3600X @ 4.1 GHz, running with 12 processes on Windows gives me speeds around 250 MH/s.
+
 This miner has a very light memory footprint of < 3 MB. Whereas YTCI miner requires a Java VM which has a much larger overhead.
 
 ## Binaries
@@ -27,8 +29,6 @@ A GPU miner written for OpenCL is in the works, it may or may not ever be comple
 ## License
 This krist-miner is licensed under the MIT license. This not apply to the code taken from [Minio's SHA-256 SIMD implementation](https://github.com/minio/sha256-simd), which is licensed under the Apache 2 license,
 and such files subject to the Apache 2 license are noted in their headers.
-
-No modifications were made to files from Minio's SHA-256 SIMD implementation.
 
 ```
 The MIT License (MIT)
@@ -57,4 +57,4 @@ SOFTWARE.
 Files from Minio's SHA-256 implementation are noted at the top, and are licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Here is the list of modifications made:
 * Removed unnecessary code for Krist mining.
 * All `.s` files are left untouched.
-* All files in the cpu-miner/cpuid folder are left untouched.
+* All files in the cpu-miner/cpuid folder are taken from cpuid relevant source files, and have CPU capability variables exported.
