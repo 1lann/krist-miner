@@ -1,7 +1,6 @@
 package main
 
 import (
-	"runtime"
 	"time"
 
 	sha256 "github.com/1lann/sha256-simd"
@@ -41,8 +40,6 @@ func mineSlow(proc int) {
 		}
 
 		workerSpeeds[proc] = time.Since(start)
-
-		runtime.Gosched()
 
 		if threadBlock != lastBlock {
 			threadBlock = lastBlock

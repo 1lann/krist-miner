@@ -3,7 +3,6 @@
 package main
 
 import (
-	"runtime"
 	"time"
 )
 
@@ -57,8 +56,6 @@ func mineSHA(proc int) {
 		}
 
 		workerSpeeds[proc] = time.Since(start)
-
-		runtime.Gosched()
 
 		if threadBlock != lastBlock {
 			threadBlock = lastBlock
