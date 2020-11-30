@@ -1,3 +1,5 @@
+// +build !386,!amd64,!arm64
+
 // Minio Cloud Storage, (C) 2016 Minio, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,22 +13,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package cpuid
+package main
 
-func cpuid(op uint32) (eax, ebx, ecx, edx uint32) {
-	return 0, 0, 0, 0
+func mineAVX(proc int) {
+	panic("optimization unsupported")
 }
 
-func cpuidex(op, op2 uint32) (eax, ebx, ecx, edx uint32) {
-	return 0, 0, 0, 0
+func mineAVX2(proc int) {
+	panic("optimization unsupported")
 }
 
-func xgetbv(index uint32) (eax, edx uint32) {
-	return 0, 0
+func mineSHA(proc int) {
+	panic("optimization unsupported")
 }
 
-func haveArmSha() bool {
-	return false
+func mineSSSE3(proc int) {
+	panic("optimization unsupported")
+}
+
+func mineARM(proc int) {
+	panic("optimization unsupported")
 }

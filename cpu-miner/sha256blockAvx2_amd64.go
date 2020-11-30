@@ -3,14 +3,15 @@
 package main
 
 import (
-	"runtime"
 	"time"
 )
 
 //go:noescape
 func blockAvx2(h []uint32, message []uint8)
 
-func mineARM(proc int) {}
+func mineARM(proc int) {
+	panic("optimization unsupported")
+}
 
 func mineAVX2(proc int) {
 	instanceID := generateInstanceID()
@@ -59,8 +60,6 @@ func mineAVX2(proc int) {
 		}
 
 		workerSpeeds[proc] = time.Since(start)
-
-		runtime.Gosched()
 
 		if threadBlock != lastBlock {
 			threadBlock = lastBlock
