@@ -9,6 +9,8 @@ On my Macbook Pro 15-inch Retina (Mid 2014) which has an Intel Core i7-4870HQ, r
 
 On my Ryzen 5 3600X @ 4.1 GHz, running with 12 processes on Windows gives me speeds around 250 MH/s.
 
+On my Ryzen 9 5900X with PBO+AutoOC, running with 24 processes on Windows gives me speeds around 600 MH/s.
+
 This miner has a very light memory footprint of < 3 MB. Whereas YTCI miner requires a Java VM which has a much larger overhead.
 
 ## Binaries
