@@ -20,9 +20,9 @@ var maxWork uint32
 var lastBlock string
 
 const (
-	version        = "2.1"
+	version        = "2.2"
 	fullHeaderSize = 30
-	endpoint       = "https://krist.ceriat.net"
+	endpoint       = "https://krist.dev"
 )
 
 var address string
